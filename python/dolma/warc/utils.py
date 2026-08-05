@@ -35,10 +35,15 @@ class UrlNormalizer:
 
         # canonicalize the URL
         canonical = canonicalize_url(clean_url)
-        normalized = str(url_normalize(canonical))
-
-        # remove the protocol
-        _, normalized = normalized.split("://", 1)
+        try:
+            normalized = str(url_normalize(canonical))
+            # remove the protocol
+            _, normalized = normalized.split("://", 1)
+        except Exception:
+            # on a small fraction of real-world URLs (e.g. percent-encoded cyrillic
+            # hostnames) the idna codec inside url_normalize raises UnicodeError;
+            # fall back to the canonical URL with the scheme stripped.
+            normalized = re.sub(r"^[a-z]+://", "", canonical)
 
         # remove the www subdomain
         normalized = self.www_subdomain_regex.sub("", normalized)
